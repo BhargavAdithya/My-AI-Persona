@@ -5,14 +5,21 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 
 # ==========================
-# PATHS
+# PATHS - use absolute paths
 # ==========================
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-RESUME_DIR = os.path.join(BASE_DIR, "data", "resume")
-REPOS_DIR = os.path.join(BASE_DIR, "data", "github_repos")
+RESUME_DIR  = os.path.join(BASE_DIR, "data", "resume")
+REPOS_DIR   = os.path.join(BASE_DIR, "data", "github_repos")
 COMMITS_DIR = os.path.join(BASE_DIR, "data", "commits")
+VECTOR_DIR  = os.path.join(BASE_DIR, "vector_db")
+
+print(f"BASE_DIR:    {BASE_DIR}")
+print(f"RESUME_DIR:  {RESUME_DIR} — exists: {os.path.exists(RESUME_DIR)}")
+print(f"REPOS_DIR:   {REPOS_DIR} — exists: {os.path.exists(REPOS_DIR)}")
+print(f"COMMITS_DIR: {COMMITS_DIR} — exists: {os.path.exists(COMMITS_DIR)}")
+print(f"VECTOR_DIR:  {VECTOR_DIR}")
 
 # ==========================
 # LOAD MODEL

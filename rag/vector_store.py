@@ -1,12 +1,15 @@
 import os
-import chromadb
 from sentence_transformers import SentenceTransformer
+import chromadb
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VECTOR_DIR = os.path.join(BASE_DIR, "vector_db")
+
+print(f"[VectorStore] Loading from: {VECTOR_DIR}")
 
 embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-client = chromadb.PersistentClient(path=os.path.join(BASE_DIR, "vector_db"))
+client = chromadb.PersistentClient(path=VECTOR_DIR)
 
 collection = client.get_or_create_collection(name="candidate_knowledge")
 
