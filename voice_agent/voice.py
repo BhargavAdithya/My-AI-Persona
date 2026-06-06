@@ -107,10 +107,13 @@ async def voice_message(request: Request):
         if call_id not in call_histories:
             call_histories[call_id] = []
 
+        def calendar_with_session(params: dict) -> str:
+            return handle_calendar_request(params, session_id=call_id)
+
         reply, updated_history = chat(
             user_message=user_text,
             history=call_histories[call_id],
-            calendar_handler=handle_calendar_request,
+            calendar_handler=calendar_with_session,
             n_chunks=6,
             is_voice=True
         )

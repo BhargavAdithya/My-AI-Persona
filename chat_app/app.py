@@ -40,10 +40,13 @@ async def chat_endpoint(req: MessageRequest):
     if session_id not in sessions:
         sessions[session_id] = []
 
+    def calendar_with_session(params: dict) -> str:
+            return handle_calendar_request(params, session_id=session_id)
+
     reply, updated_history = chat(
         user_message=req.message,
         history=sessions[session_id],
-        calendar_handler=handle_calendar_request,
+        calendar_handler=calendar_with_session,
         n_chunks=6
     )
 
