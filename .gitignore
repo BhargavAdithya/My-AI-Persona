@@ -1,0 +1,61 @@
+# Environment variables - NEVER commit
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Vector DB (large, regeneratable)
+vector_db/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Eval results (optional - remove if you want to commit them)
+evals/results/
+
+# Calendar token (contains OAuth credentials)
+cal/token.json
+
+# Node modules (in github repos data - don't re-commit)
+data/github_repos/
+
+# Large data files
+data/resume/*.pdf
+
+# Compiled
+*.pyc
+*.pyo

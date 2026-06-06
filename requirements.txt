@@ -1,0 +1,28 @@
+# Core
+python-dotenv
+pypdf
+
+# LLM
+google-genai
+
+# RAG
+langchain-text-splitters
+sentence-transformers
+chromadb
+
+# Web server (chat + voice agent)
+fastapi
+uvicorn[standard]
+
+# Voice agent
+deepgram-sdk
+elevenlabs
+gtts
+
+# Calendar
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+
+# Evals
+reportlab
