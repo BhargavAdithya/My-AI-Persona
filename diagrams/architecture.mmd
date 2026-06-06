@@ -1,0 +1,79 @@
+flowchart TD
+    subgraph CALLERS["👥 Users"]
+        A["📱 Phone Caller"]
+        B["💻 Browser User"]
+    end
+
+    subgraph VAPI["🎙️ Vapi.ai Platform"]
+        V1["STT — Deepgram Nova-2"]
+        V2["TTS — Vapi Built-in"]
+        V3["Phone Number"]
+        V3 --> V1
+        V1 -->|transcript| V2
+    end
+
+    subgraph RAILWAY["☁️ Railway Cloud"]
+
+        subgraph VOICE["Voice Agent Service"]
+            VA["FastAPI\nvoice_agent/voice.py"]
+        end
+
+        subgraph CHAT["Chat App Service"]
+            CA["FastAPI\nchat_app/app.py"]
+            UI["HTML/CSS/JS\nChat UI"]
+            CA --> UI
+        end
+
+        subgraph PIPELINE["RAG Pipeline"]
+            RET["Retriever\nrepo-aware smart search"]
+            EMB["Embeddings\nall-MiniLM-L6-v2"]
+            VDB[("ChromaDB\n~2638 chunks")]
+            RET --> EMB
+            EMB --> VDB
+            VDB --> RET
+        end
+
+        subgraph LLM["LLM Layer"]
+            GEM["Gemini 2.5 Flash\nTemp: 0.2\nMax tokens: 300-600"]
+        end
+
+        subgraph DATA["Knowledge Base"]
+            D1["📄 Resume PDF"]
+            D2["🐙 6 GitHub Repos\nREADMEs + Source"]
+            D3["📝 Commit History\n6 repos"]
+        end
+
+        VA -->|user text| PIPELINE
+        CA -->|user text| PIPELINE
+        PIPELINE -->|context chunks| GEM
+        GEM -->|reply| VA
+        GEM -->|reply| CA
+        DATA -->|ingest once| VDB
+    end
+
+    subgraph CALENDAR["📅 Calendly"]
+        CAL["Real-time\nAvailability\nand Booking"]
+    end
+
+    A -->|calls| V3
+    V1 -->|POST /voice/message| VA
+    VA -->|response text| V2
+    V2 -->|spoken reply| A
+
+    B -->|HTTPS| CA
+    CA -->|chat reply| B
+
+    VA -->|schedule request| CAL
+    CA -->|schedule request| CAL
+    CAL -->|booking link| VA
+    CAL -->|booking link| CA
+
+    style RAILWAY fill:#0d1120,stroke:#6378ff,color:#e8eaf6
+    style VAPI fill:#1a1d27,stroke:#34d399,color:#e8eaf6
+    style CALLERS fill:#111827,stroke:#a78bfa,color:#e8eaf6
+    style CALENDAR fill:#111827,stroke:#34d399,color:#e8eaf6
+    style VOICE fill:#0f1a16,stroke:#34d399,color:#e8eaf6
+    style CHAT fill:#141c3a,stroke:#6378ff,color:#e8eaf6
+    style PIPELINE fill:#1a1020,stroke:#a78bfa,color:#e8eaf6
+    style LLM fill:#1a1020,stroke:#f59e0b,color:#e8eaf6
+    style DATA fill:#111827,stroke:#6378ff,color:#e8eaf6
