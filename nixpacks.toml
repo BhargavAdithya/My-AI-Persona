@@ -1,5 +1,8 @@
-[phases.build]
+[phases.install]
 cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+cmds = ["python -m rag.ingest"]
 
 [start]
 cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"

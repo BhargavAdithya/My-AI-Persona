@@ -6,19 +6,10 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-.Python
 *.egg
 *.egg-info/
 dist/
 build/
-eggs/
-parts/
-var/
-sdist/
-develop-eggs/
-.installed.cfg
-lib/
-lib64/
 
 # Virtual environment
 venv/
@@ -26,7 +17,7 @@ venv/
 env/
 ENV/
 
-# Vector DB (large, regeneratable)
+# Vector DB - rebuilt on deploy via ingest
 vector_db/
 
 # IDE
@@ -42,20 +33,14 @@ desktop.ini
 
 # Logs
 *.log
-logs/
 
-# Eval results (optional - remove if you want to commit them)
-evals/results/
-
-# Calendar token (contains OAuth credentials)
+# Calendar token
 cal/token.json
 
-# Node modules (in github repos data - don't re-commit)
-data/github_repos/
-
-# Large data files
-data/resume/*.pdf
-
-# Compiled
-*.pyc
-*.pyo
+# Node modules inside repos
+data/github_repos/**/node_modules/
+data/github_repos/**/.git/
+data/github_repos/**/package-lock.json
+data/github_repos/**/.next/
+data/github_repos/**/dist/
+data/github_repos/**/build/
