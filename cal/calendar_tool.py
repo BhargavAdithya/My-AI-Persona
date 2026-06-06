@@ -228,24 +228,23 @@ def handle_calendar_request(params: dict) -> str:
     duration = int(params.get("duration_minutes") or 30)
     preferred = params.get("preferred_date")
 
+    base_url = CALENDLY_LINK
+
     if intent == "book_meeting":
         if preferred:
             return (
                 f"Sure! To book a {duration}-minute call around {preferred}, "
-                f"please use this scheduling link — it shows real-time availability:\n\n"
-                f"📅 **{CALENDLY_LINK}**\n\n"
-                f"Pick any slot that works and you'll get an instant confirmation email."
+                f"please visit this link: {base_url} "
+                f"You can pick any available slot and you'll get an instant confirmation email."
             )
         return (
-            f"Sure! Here's the scheduling link with real-time availability:\n\n"
-            f"📅 **{CALENDLY_LINK}**\n\n"
-            f"Pick any slot that works and you'll get an instant confirmation email."
+            f"Sure! You can book a {duration}-minute call at this link: {base_url} "
+            f"Pick any slot that works and you'll receive a confirmation email right away."
         )
 
     return (
-        f"You can check availability and book a {duration}-minute call here:\n\n"
-        f"📅 **{CALENDLY_LINK}**\n\n"
-        f"All slots are synced with the real calendar — pick whatever works for you."
+        f"You can check availability and book a {duration}-minute call here: {base_url} "
+        f"All slots are synced with the real calendar."
     )
 
 
