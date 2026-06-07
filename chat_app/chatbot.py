@@ -108,8 +108,7 @@ def chat(
     if is_calendar_intent(user_message) and calendar_handler is not None:
         params = detect_calendar_params(user_message)
         params["notes"] = user_message
-        session_id = params.get("session_id", "default")
-        calendar_response = calendar_handler(params, session_id=session_id)
+        calendar_response = calendar_handler(params)
         history.append({"role": "user", "content": user_message})
         history.append({"role": "assistant", "content": calendar_response})
         return calendar_response, history
@@ -152,7 +151,7 @@ def chat(
             contents=full_prompt,
             config=types.GenerateContentConfig(
                 temperature=0.2,
-                max_output_tokens=300 if is_voice else 600,
+                max_output_tokens=200 if is_voice else 1024,
             )
         )
         reply = response.text.strip()
