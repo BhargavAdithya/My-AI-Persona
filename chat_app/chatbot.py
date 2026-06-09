@@ -10,15 +10,14 @@ load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 import google.genai as genai_lib
 
+import time
+
 def _get_best_model(client) -> str:
-    """Find the best available Gemini model for this API key."""
     preferred = [
-        "gemini-2.5-flash-preview-05-20",
-        "gemini-2.5-flash-preview-04-17",
-        "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
-        "gemini-1.5-flash",
+        "gemini-2.0-flash",
         "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
     ]
     try:
         available = [m.name for m in client.models.list()]
@@ -28,7 +27,7 @@ def _get_best_model(client) -> str:
                 return model
     except Exception as e:
         print(f"[Model] Could not list models: {e}")
-    return "gemini-2.0-flash"
+    return "gemini-2.0-flash-lite"
 
 MODEL_NAME = _get_best_model(client)
 
@@ -158,15 +157,23 @@ def chat(
 
     # ── Generate ───────────────────────────────────────────────────────────
     try:
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=full_prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.1,
-                max_output_tokens=150 if is_voice else 1024,
-            )
-        )
-        reply = response.text.strip()
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(
+                    model=MODEL_NAME,
+                    contents=full_prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.1,
+                        max_output_tokens=150 if is_voice else 1024,
+                    )
+                )
+                reply = response.text.strip()
+                break
+            except Exception as e:
+                if "429" in str(e) and attempt < 2:
+                    time.sleep(5 * (attempt + 1))
+                    continue
+                raise e
 
         # Strip any third-person references that slipped through
         reply = reply.replace("Bhargav has", "I have")
