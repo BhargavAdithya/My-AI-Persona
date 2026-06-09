@@ -6,29 +6,23 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from voice_agent.voice import app
 from fastapi.responses import JSONResponse
 
+
 @app.get("/debug")
 async def debug():
-    """Check if vector DB is loaded and has data."""
     try:
         from rag.vector_store import get_collection
-        collection = get_collection()
-        count = collection.count()
-        
-        # Check if data files exist
-        base = os.path.dirname(os.path.abspath(__file__))
-        resume_exists = os.path.exists(os.path.join(base, "data", "resume"))
-        commits_exists = os.path.exists(os.path.join(base, "data", "commits"))
-        repos_exists = os.path.exists(os.path.join(base, "data", "github_repos"))
-        vector_db_exists = os.path.exists(os.path.join(base, "vector_db"))
-
-        return JSONResponse({
-            "vector_db_chunks": count,
-            "vector_db_exists": vector_db_exists,
-            "resume_dir_exists": resume_exists,
-            "commits_dir_exists": commits_exists,
-            "repos_dir_exists": repos_exists,
-            "cwd": os.getcwd(),
-            "base_dir": base
-        })
+        col = get_collection()
+        count = col.count()
+        return JSONResponse({"chunks": count, "status": "ok"})
     except Exception as e:
         return JSONResponse({"error": str(e)})
+
+
+@app.post("/test")
+async def test_rag(request_body: dict = None):
+    """Test RAG directly without Vapi."""
+    from fastapi import Request
+    from chat_app.chatbot import chat
+    query = (request_body or {}).get("query", "Tell me about TALENTSCOUT")
+    reply, _ = chat(query, history=[], calendar_handler=None, is_voice=True)
+    return JSONResponse({"query": query, "reply": reply})

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -19,13 +19,13 @@ INTRO_KEYWORDS = [
     "introduce yourself", "tell me about yourself", "who are you",
     "about yourself", "introduce", "tell me about you",
     "describe yourself", "your introduction", "give me an intro",
-    "your background"
+    "your background", "introduce yourself"
 ]
 
 CALENDAR_KEYWORDS = [
     "book", "schedule", "meeting", "call", "availability",
     "available", "slot", "appointment", "calendar",
-    "when can", "free time", "set up"
+    "when can", "free time", "set up", "interview"
 ]
 
 
@@ -59,41 +59,30 @@ def detect_calendar_params(message: str) -> dict:
 
 
 def get_intro_context() -> str:
-    """For intro queries, pull resume + all repo READMEs."""
-    collection_chunks = []
+    """For intro queries pull resume chunks + one README chunk per repo."""
+    chunks = retrieve("education skills experience background projects", n_results=5)
 
-    # Resume chunks
-    resume_chunks = retrieve("education skills experience background", n_results=4)
-    collection_chunks.extend(resume_chunks)
-
-    # README from each repo
     from rag.vector_store import get_collection
     col = get_collection()
     all_docs = col.get(include=["documents", "metadatas"])
 
-    readme_chunks = []
+    seen_repos = set()
     for doc, meta in zip(all_docs["documents"], all_docs["metadatas"]):
         source = meta.get("source", "")
         if "readme" in source.lower() and "github_repos" in source.lower():
-            # Only top-level README per repo (first chunk)
-            readme_chunks.append({
-                "content": doc,
-                "source": source,
-                "distance": 0.0
-            })
+            source_norm = source.replace("\\", "/")
+            parts = source_norm.split("github_repos/")
+            if len(parts) > 1:
+                repo_name = parts[1].split("/")[0]
+                if repo_name not in seen_repos:
+                    seen_repos.add(repo_name)
+                    chunks.append({
+                        "content": doc,
+                        "source": source,
+                        "distance": 0.0
+                    })
 
-    # Deduplicate by repo — take first README chunk per repo
-    seen_repos = set()
-    for chunk in readme_chunks:
-        source = chunk["source"].replace("\\", "/")
-        parts = source.split("github_repos/")
-        if len(parts) > 1:
-            repo_name = parts[1].split("/")[0]
-            if repo_name not in seen_repos:
-                seen_repos.add(repo_name)
-                collection_chunks.append(chunk)
-
-    return format_context(collection_chunks[:10])
+    return format_context(chunks[:10])
 
 
 def chat(
@@ -104,7 +93,7 @@ def chat(
     is_voice: bool = False
 ) -> tuple[str, list[dict]]:
 
-    # ── Calendar intent ────────────────────────────────────────────────────
+    # ── Calendar ───────────────────────────────────────────────────────────
     if is_calendar_intent(user_message) and calendar_handler is not None:
         params = detect_calendar_params(user_message)
         params["notes"] = user_message
@@ -113,7 +102,7 @@ def chat(
         history.append({"role": "assistant", "content": calendar_response})
         return calendar_response, history
 
-    # ── Context retrieval ──────────────────────────────────────────────────
+    # ── Retrieve context ───────────────────────────────────────────────────
     if is_intro_query(user_message):
         context = get_intro_context()
     else:
@@ -125,23 +114,24 @@ def chat(
         history.append({"role": "assistant", "content": FALLBACK_RESPONSE})
         return FALLBACK_RESPONSE, history
 
-    # ── History (last 3 exchanges) ─────────────────────────────────────────
+    # ── History ────────────────────────────────────────────────────────────
     history_text = ""
     for turn in history[-6:]:
         role = "Interviewer" if turn["role"] == "user" else "Me"
         history_text += f"{role}: {turn['content']}\n"
 
-    # ── Voice brevity instruction ──────────────────────────────────────────
+    # ── Voice instruction ──────────────────────────────────────────────────
     voice_note = (
-        "\nIMPORTANT: This is a voice call. "
-        "Answer in maximum 3 sentences. Be natural and conversational.\n"
-        if is_voice else ""
+        "\nVOICE MODE: Answer in maximum 2 sentences. "
+        "No lists. No markdown. Natural spoken language only.\n"
+        if is_voice else
+        "\nCHAT MODE: Answer in maximum 5 sentences. No bullet points. No markdown.\n"
     )
 
     full_prompt = (
         SYSTEM_PROMPT.format(context=context, history=history_text)
         + voice_note
-        + f"\nInterviewer: {user_message}\nYou:"
+        + f"\nInterviewer: {user_message}\nMe:"
     )
 
     # ── Generate ───────────────────────────────────────────────────────────
@@ -150,11 +140,24 @@ def chat(
             model=MODEL_NAME,
             contents=full_prompt,
             config=types.GenerateContentConfig(
-                temperature=0.2,
-                max_output_tokens=200 if is_voice else 1024,
+                temperature=0.1,
+                max_output_tokens=150 if is_voice else 1024,
             )
         )
         reply = response.text.strip()
+
+        # Strip any third-person references that slipped through
+        reply = reply.replace("Bhargav has", "I have")
+        reply = reply.replace("Bhargav is", "I am")
+        reply = reply.replace("Bhargav built", "I built")
+        reply = reply.replace("Bhargav did", "I did")
+        reply = reply.replace("He has", "I have")
+        reply = reply.replace("He is", "I am")
+        reply = reply.replace("he has", "I have")
+        reply = reply.replace("he is", "I am")
+        reply = reply.replace("The candidate", "I")
+        reply = reply.replace("the candidate", "I")
+
     except Exception as e:
         reply = f"I encountered an error: {str(e)}"
 
